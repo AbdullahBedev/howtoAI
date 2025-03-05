@@ -2,27 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { logger } from '@/lib/logging';
 import { analytics } from '@/lib/analytics';
-import { getCurrentUser } from '@/lib/auth/auth-service';
+import { AuthService, AuthError } from '@/lib/auth/auth-service';
 import { UserRepository } from '@/lib/repositories/user-repository';
 
-// Initialize repositories
+// Initialize services
+const authService = new AuthService();
 const userRepository = new UserRepository();
 
 // Registration schema
-const registrationSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z
-    .string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
-      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
-    ),
-  displayName: z.string().min(2, 'Display name must be at least 2 characters').max(50, 'Display name cannot exceed 50 characters'),
-  acceptTerms: z.boolean().refine(val => val === true, {
-    message: 'You must accept the terms and conditions',
-  }),
+const registerSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8).max(100),
+  name: z.string().min(2).max(100),
   referralCode: z.string().optional(),
+});
+
+// Email availability check schema
+const emailCheckSchema = z.object({
+  email: z.string().email(),
 });
 
 /**
@@ -32,16 +29,16 @@ export async function POST(request: NextRequest) {
   try {
     // Parse and validate request body
     const body = await request.json();
-    const validationResult = registrationSchema.safeParse(body);
+    const validationResult = registerSchema.safeParse(body);
     
     if (!validationResult.success) {
       return NextResponse.json(
-        { error: 'Invalid request body', details: validationResult.error.format() },
+        { error: 'Validation error', details: validationResult.error.errors },
         { status: 400 }
       );
     }
 
-    const { email, password, displayName, referralCode } = validationResult.data;
+    const { email, password, name, referralCode } = validationResult.data;
 
     // Check if user already exists
     const existingUser = await userRepository.getUserByEmail(email);
@@ -52,36 +49,47 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create new user
-    const newUser = await userRepository.createUser({
+    // Register user
+    const newUser = await authService.register({
       email,
-      password, // Password will be hashed in the repository layer
-      displayName,
-      referralCode,
+      password,
+      name,
     });
+
+    // Set auth cookies
+    await authService.setTokens(newUser);
 
     // Track registration event and conversion
-    analytics.trackConversion('registration', 1);
-    analytics.trackEvent(newUser.id, 'user_registered', {
-      hasReferral: !!referralCode,
-      timestamp: new Date().toISOString(),
+    analytics.trackConversion(newUser.id, 'signup');
+    analytics.trackEvent({
+      userId: newUser.id,
+      event: 'user_registered',
+      metadata: {
+        hasReferral: !!referralCode,
+        timestamp: new Date().toISOString(),
+      }
     });
-
-    // Send verification email (not implemented in this example)
-    // await emailService.sendVerificationEmail(newUser.email, newUser.verificationToken);
 
     // Return success response
     return NextResponse.json({
       success: true,
-      message: 'Registration successful',
       user: {
         id: newUser.id,
         email: newUser.email,
-        displayName: newUser.displayName,
+        name: newUser.name,
       }
     });
   } catch (error) {
     logger.error('Registration error', { error });
+
+    // Handle auth errors with proper status codes
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode }
+      );
+    }
+
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }
@@ -94,12 +102,13 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
-    // Get the email from query parameters
+    // Get email from query string
     const { searchParams } = new URL(request.url);
     const email = searchParams.get('email');
 
     // Validate email
-    if (!email || !z.string().email().safeParse(email).success) {
+    const validationResult = emailCheckSchema.safeParse({ email });
+    if (!validationResult.success || !email) {
       return NextResponse.json(
         { error: 'Invalid email address' },
         { status: 400 }
@@ -114,7 +123,7 @@ export async function GET(request: NextRequest) {
       available: !existingUser,
     });
   } catch (error) {
-    logger.error('Email availability check error', { error });
+    logger.error('Email check error', { error });
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }

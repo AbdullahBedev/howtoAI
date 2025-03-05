@@ -2,16 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { logger } from '@/lib/logging';
 import { analytics } from '@/lib/analytics';
-import { AuthService } from '@/lib/auth/auth-service';
+import { AuthService, AuthError } from '@/lib/auth/auth-service';
 
 // Initialize services
 const authService = new AuthService();
 
-// Login schema
+// Login request schema
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  rememberMe: z.boolean().optional().default(false),
+  email: z.string().email(),
+  password: z.string().min(6),
 });
 
 /**
@@ -21,65 +20,63 @@ export async function POST(request: NextRequest) {
   try {
     // Parse and validate request body
     const body = await request.json();
-    const validationResult = loginSchema.safeParse(body);
+    const result = loginSchema.safeParse(body);
     
-    if (!validationResult.success) {
+    if (!result.success) {
       return NextResponse.json(
-        { error: 'Invalid request body', details: validationResult.error.format() },
+        { error: 'Validation error', details: result.error.errors },
         { status: 400 }
       );
     }
 
-    const { email, password, rememberMe } = validationResult.data;
+    const { email, password } = result.data;
+
+    // Log attempt (only email, never log passwords)
+    logger.info('Login attempt', { email });
 
     // Attempt login
-    const result = await authService.login(email, password, rememberMe);
+    const user = await authService.login({ email, password });
 
-    if (!result.success) {
-      // Log failed login attempt
-      logger.info('Failed login attempt', { email });
-      return NextResponse.json(
-        { error: result.error || 'Invalid email or password' },
-        { status: 401 }
-      );
-    }
+    // Set auth cookies
+    await authService.setTokens(user);
 
-    // Set auth cookie
-    const response = NextResponse.json({ 
+    // Prepare response
+    const response = NextResponse.json({
       success: true,
       user: {
-        id: result.user.id,
-        email: result.user.email,
-        displayName: result.user.displayName,
-        role: result.user.role,
-      }
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
     });
-    
-    // If token is provided, set the auth cookie
-    if (result.token) {
-      const cookieOptions = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict' as const,
-        path: '/',
-        // If rememberMe is true, set a long expiry (30 days), otherwise session cookie
-        ...(rememberMe ? { maxAge: 30 * 24 * 60 * 60 } : {}),
-      };
-      
-      response.cookies.set('auth-token', result.token, cookieOptions);
-    }
 
     // Track successful login
-    analytics.trackEvent(result.user.id, 'user_login', {
-      timestamp: new Date().toISOString(),
+    analytics.trackEvent({
+      userId: user.id,
+      event: 'user_login',
+      metadata: {
+        timestamp: new Date().toISOString(),
+      }
     });
 
     return response;
   } catch (error) {
+    // Log error, but never expose details to the client
     logger.error('Login error', { error });
+
+    // Handle auth errors with proper status codes
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message || 'Authentication failed' },
+        { status: error.statusCode }
+      );
+    }
+
+    // Generic error response
     return NextResponse.json(
-      { error: 'An unexpected error occurred' },
-      { status: 500 }
+      { error: 'Authentication failed' },
+      { status: 401 }
     );
   }
 } 

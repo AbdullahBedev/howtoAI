@@ -1,0 +1,383 @@
+'use client';
+
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowRight, BookOpen, Clock, Star, Lock, Sparkles, Zap, Crown, BadgeCheck, Search, Filter, ChevronDown, Briefcase, Stethoscope, Scale, TrendingUp, ShoppingCart, Megaphone, Award, Bot, Wand2, Users, SparklesIcon } from "lucide-react";
+import { advancedTutorials } from "@/data/advanced-tutorials";
+import { AdvancedTutorialCard } from "@/components/tutorials/advanced-tutorial-card";
+import { TutorialCard } from "@/components/tutorials/tutorial-card";
+import { IndustryTrackCard } from "@/components/tutorials/industry-track-card";
+import { motion } from "framer-motion";
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'How-to-AI | Learn AI Skills and Techniques',
+  description: 'The premier platform for learning AI skills, prompt engineering, and developing AI-powered applications.',
+};
+
+// Mock data for tutorials with premium indicators
+const tutorials = [
+  {
+    id: "write-blog-post",
+    title: "Write a Blog Post with AI",
+    description: "Learn how to use ChatGPT to write engaging blog content in minutes.",
+    category: "writing",
+    difficulty: "beginner",
+    duration: "10 min",
+    rating: 4.8,
+    image: "/tutorials/blog-post.jpg",
+    tool: "ChatGPT",
+    isPremium: false
+  },
+  {
+    id: "create-logo",
+    title: "Design a Professional Logo",
+    description: "Create stunning logos for your business using Midjourney.",
+    category: "design",
+    difficulty: "intermediate",
+    duration: "15 min",
+    rating: 4.7,
+    image: "/tutorials/logo-design.jpg",
+    tool: "Midjourney",
+    isPremium: true
+  },
+  {
+    id: "creating-images-with-dall-e",
+    title: "Creating Images with DALL-E",
+    description: "Learn how to generate stunning images using OpenAI's DALL-E model.",
+    category: "design",
+    difficulty: "intermediate",
+    duration: "15 min",
+    rating: 4.9,
+    image: "/tutorials/dall-e-images.jpg",
+    tool: "DALL-E",
+    isPremium: true
+  },
+  {
+    id: "prompt-engineering-masterclass",
+    title: "Prompt Engineering Masterclass",
+    description: "Master the art of crafting effective prompts to get the best results from AI models.",
+    category: "advanced",
+    difficulty: "intermediate",
+    duration: "25 min",
+    rating: 4.9,
+    image: "/tutorials/prompt-engineering.jpg",
+    tool: "ChatGPT, Claude, Gemini",
+    isPremium: true
+  },
+  {
+    id: "ai-model-fine-tuning",
+    title: "AI Model Fine-Tuning Guide",
+    description: "Learn how to customize AI models for your specific use cases through fine-tuning.",
+    category: "advanced",
+    difficulty: "advanced",
+    duration: "40 min",
+    rating: 4.8,
+    image: "/tutorials/fine-tuning.jpg",
+    tool: "OpenAI API, Hugging Face",
+    isPremium: true
+  },
+  {
+    id: "rag-implementation",
+    title: "Building RAG Systems",
+    description: "Learn how to implement Retrieval-Augmented Generation (RAG) to enhance AI responses with external knowledge.",
+    category: "advanced",
+    difficulty: "advanced",
+    duration: "45 min",
+    rating: 4.9,
+    image: "/tutorials/rag-implementation.jpg",
+    tool: "LangChain, OpenAI, Vector Databases",
+    isPremium: true
+  },
+  {
+    id: "ai-agent-development",
+    title: "Building AI Agents",
+    description: "Learn how to develop autonomous AI agents that can reason, plan, and execute tasks to achieve specific goals.",
+    category: "advanced",
+    difficulty: "advanced",
+    duration: "50 min",
+    rating: 4.8,
+    image: "/tutorials/ai-agents.jpg",
+    tool: "LangChain, AutoGPT, OpenAI",
+    isPremium: true
+  },
+  {
+    id: "social-media-calendar",
+    title: "Generate a Social Media Calendar",
+    description: "Plan a month of social media content in just 15 minutes with AI.",
+    category: "marketing",
+    difficulty: "beginner",
+    duration: "15 min",
+    rating: 4.9,
+    image: "/tutorials/social-calendar.jpg",
+    tool: "ChatGPT",
+    isPremium: false
+  },
+  {
+    id: "product-description",
+    title: "Write Compelling Product Descriptions",
+    description: "Create persuasive product descriptions that convert browsers into buyers.",
+    category: "writing",
+    difficulty: "beginner",
+    duration: "8 min",
+    rating: 4.6,
+    image: "/tutorials/product-desc.jpg",
+    tool: "ChatGPT",
+    isPremium: false
+  },
+  {
+    id: "email-templates",
+    title: "Create Email Marketing Templates",
+    description: "Design effective email templates for your marketing campaigns.",
+    category: "marketing",
+    difficulty: "intermediate",
+    duration: "12 min",
+    rating: 4.5,
+    image: "/tutorials/email-templates.jpg",
+    tool: "ChatGPT",
+    isPremium: true
+  },
+  {
+    id: "image-editing",
+    title: "Edit Photos with AI",
+    description: "Learn how to enhance and edit photos using AI tools.",
+    category: "design",
+    difficulty: "intermediate",
+    duration: "20 min",
+    rating: 4.7,
+    image: "/tutorials/image-editing.jpg",
+    tool: "Adobe Firefly",
+    isPremium: true
+  }
+];
+
+// Industry-specific tracks
+const industryTracks = [
+  {
+    id: "healthcare-ai",
+    title: "Healthcare AI Implementation",
+    description: "Learn how to implement AI solutions in healthcare settings for improved patient outcomes and operational efficiency.",
+    image: "/industry/healthcare.jpg",
+    color: "from-blue-500 to-cyan-400",
+    icon: "stethoscope",
+    tutorials: [
+      {
+        id: "medical-imaging-ai",
+        title: "AI in Medical Imaging Analysis",
+        isPremium: true
+      },
+      {
+        id: "patient-data-analysis",
+        title: "Patient Data Analysis with AI",
+        isPremium: true
+      },
+      {
+        id: "healthcare-chatbots",
+        title: "Building Healthcare Chatbots",
+        isPremium: false
+      }
+    ]
+  },
+  {
+    id: "legal-ai",
+    title: "Legal AI Workflows",
+    description: "Discover how AI can transform legal research, document review, and contract analysis for law firms and legal departments.",
+    image: "/industry/legal.jpg",
+    color: "from-indigo-600 to-purple-500",
+    icon: "scale",
+    tutorials: [
+      {
+        id: "legal-document-analysis",
+        title: "AI for Legal Document Analysis",
+        isPremium: true
+      },
+      {
+        id: "contract-review-automation",
+        title: "Automating Contract Review",
+        isPremium: true
+      },
+      {
+        id: "legal-research-ai",
+        title: "AI-Powered Legal Research",
+        isPremium: false
+      }
+    ]
+  },
+  {
+    id: "finance-ai",
+    title: "Financial Services AI Applications",
+    description: "Implement AI solutions for risk assessment, fraud detection, and personalized financial advice in banking and finance.",
+    image: "/industry/finance.jpg",
+    color: "from-green-500 to-emerald-400",
+    icon: "trending-up",
+    tutorials: [
+      {
+        id: "fraud-detection-ai",
+        title: "AI-Powered Fraud Detection",
+        isPremium: true
+      },
+      {
+        id: "risk-assessment-models",
+        title: "Building Risk Assessment Models",
+        isPremium: true
+      },
+      {
+        id: "financial-chatbots",
+        title: "Financial Advisory Chatbots",
+        isPremium: false
+      }
+    ]
+  },
+  {
+    id: "ecommerce-ai",
+    title: "E-commerce & Retail AI Solutions",
+    description: "Transform your e-commerce business with AI-powered product recommendations, inventory management, and customer service.",
+    image: "/industry/ecommerce.jpg",
+    color: "from-orange-500 to-amber-400",
+    icon: "shopping-cart",
+    tutorials: [
+      {
+        id: "product-recommendation-engines",
+        title: "Building Product Recommendation Engines",
+        isPremium: true
+      },
+      {
+        id: "inventory-optimization",
+        title: "AI for Inventory Optimization",
+        isPremium: true
+      },
+      {
+        id: "ecommerce-chatbots",
+        title: "E-commerce Customer Service Bots",
+        isPremium: false
+      }
+    ]
+  },
+  {
+    id: "marketing-ai",
+    title: "Marketing AI Strategies",
+    description: "Leverage AI for content creation, campaign optimization, and customer segmentation to boost your marketing effectiveness.",
+    image: "/industry/marketing.jpg",
+    color: "from-red-500 to-pink-400",
+    icon: "megaphone",
+    tutorials: [
+      {
+        id: "content-generation-at-scale",
+        title: "AI Content Generation at Scale",
+        isPremium: true
+      },
+      {
+        id: "campaign-optimization",
+        title: "AI-Driven Campaign Optimization",
+        isPremium: true
+      },
+      {
+        id: "customer-segmentation",
+        title: "Advanced Customer Segmentation",
+        isPremium: false
+      }
+    ]
+  }
+];
+
+export default function HomePage() {
+  return (
+    <div className="flex flex-col min-h-[calc(100vh-4rem)]">
+      {/* Hero Section */}
+      <section className="py-20 px-4 md:px-6 flex flex-col items-center justify-center text-center space-y-8 flex-1">
+        <div className="max-w-4xl mx-auto space-y-4">
+          <div className="inline-block rounded-full bg-primary/10 px-3 py-1 text-sm text-primary mb-4">
+            <span className="flex items-center gap-1">
+              <Sparkles className="h-3.5 w-3.5" />
+              Discover our interactive AI demos
+            </span>
+          </div>
+          
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+            Unlock the Power of AI
+          </h1>
+          
+          <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
+            Master the art of working with AI through interactive tutorials, hands-on demos, and expert guidance.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 mt-8 justify-center">
+            <Button asChild size="lg" className="group">
+              <Link href="/demos/ai-text-stream">
+                Try AI Text Streaming
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/demos">
+                Explore All Demos
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+      
+      {/* Feature Cards */}
+      <section className="py-16 bg-muted/50">
+        <div className="container">
+          <h2 className="text-3xl font-bold tracking-tight text-center mb-12">
+            Featured AI Capabilities
+          </h2>
+          
+          <div className="grid gap-8 md:grid-cols-3">
+            <div className="bg-background p-6 rounded-lg shadow-sm border">
+              <div className="mb-4 rounded-full w-12 h-12 flex items-center justify-center bg-primary/10 text-primary">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Real-time Text Generation</h3>
+              <p className="text-muted-foreground">Experience token-by-token streaming for immediate responses and a more interactive experience.</p>
+              <Link 
+                href="/demos/ai-text-stream"
+                className="inline-flex items-center mt-4 text-primary hover:underline"
+              >
+                Try it out
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+            
+            <div className="bg-background p-6 rounded-lg shadow-sm border">
+              <div className="mb-4 rounded-full w-12 h-12 flex items-center justify-center bg-primary/10 text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold mb-2">Advanced Search</h3>
+              <p className="text-muted-foreground">Discover content with our powerful semantic search capabilities and filtering options.</p>
+              <Link 
+                href="/search"
+                className="inline-flex items-center mt-4 text-primary hover:underline"
+              >
+                Explore search
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+            
+            <div className="bg-background p-6 rounded-lg shadow-sm border">
+              <div className="mb-4 rounded-full w-12 h-12 flex items-center justify-center bg-primary/10 text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold mb-2">Prompt Engineering</h3>
+              <p className="text-muted-foreground">Learn effective techniques for crafting prompts that get the best results from AI models.</p>
+              <Link 
+                href="/tutorials/prompt-engineering"
+                className="inline-flex items-center mt-4 text-primary hover:underline"
+              >
+                Learn more
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+} 

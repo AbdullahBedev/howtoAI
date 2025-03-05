@@ -1,5 +1,4 @@
 import * as React from "react"
-
 import { cn } from "@/lib/utils"
 
 const Card = React.forwardRef<
@@ -16,51 +15,6 @@ const Card = React.forwardRef<
   />
 ))
 Card.displayName = "Card"
-
-const GreenCard = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-lg border border-green-light bg-card text-card-foreground shadow-green hover:shadow-md transition-shadow duration-300",
-      className
-    )}
-    {...props}
-  />
-))
-GreenCard.displayName = "GreenCard"
-
-const RedCard = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-lg border border-[#e73827]/30 bg-card text-card-foreground shadow-green hover:shadow-md transition-shadow duration-300",
-      className
-    )}
-    {...props}
-  />
-))
-RedCard.displayName = "RedCard"
-
-const PremiumCard = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-lg border border-[#e73827]/30 bg-card text-card-foreground shadow-md hover:shadow-lg transition-all duration-300 relative overflow-hidden",
-      className
-    )}
-    {...props}
-  />
-))
-PremiumCard.displayName = "PremiumCard"
 
 const CardHeader = React.forwardRef<
   HTMLDivElement,
@@ -123,12 +77,9 @@ CardFooter.displayName = "CardFooter"
 
 export {
   Card,
-  GreenCard,
-  RedCard,
-  PremiumCard,
   CardHeader,
+  CardFooter,
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter
-} 
+}

@@ -278,22 +278,26 @@ export class CommunityRepository {
   }
 
   /**
-   * Like or unlike a post
+   * Toggle like for a post
    */
   async togglePostLike(userId: string, postId: string) {
-    const existingLike = await db.like.findFirst({
+    const like = await db.like.findFirst({
       where: {
         userId,
         postId,
       },
     });
 
-    if (existingLike) {
+    if (like) {
+      // Unlike
       await db.like.delete({
-        where: { id: existingLike.id },
+        where: {
+          id: like.id,
+        },
       });
       return { liked: false };
     } else {
+      // Like
       await db.like.create({
         data: {
           userId,
@@ -305,22 +309,26 @@ export class CommunityRepository {
   }
 
   /**
-   * Like or unlike a comment
+   * Toggle like for a comment
    */
   async toggleCommentLike(userId: string, commentId: string) {
-    const existingLike = await db.like.findFirst({
+    const like = await db.like.findFirst({
       where: {
         userId,
         commentId,
       },
     });
 
-    if (existingLike) {
+    if (like) {
+      // Unlike
       await db.like.delete({
-        where: { id: existingLike.id },
+        where: {
+          id: like.id,
+        },
       });
       return { liked: false };
     } else {
+      // Like
       await db.like.create({
         data: {
           userId,

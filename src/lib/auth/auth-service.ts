@@ -25,6 +25,35 @@ export interface LoginUserParams {
   password: string;
 }
 
+// Auth Service class to wrap the individual functions
+export class AuthService {
+  constructor() {}
+
+  async register(params: RegisterUserParams): Promise<User> {
+    return registerUser(params);
+  }
+
+  async login(params: LoginUserParams): Promise<User> {
+    return loginUser(params);
+  }
+
+  async logout(): Promise<void> {
+    return logoutUser();
+  }
+
+  async setTokens(user: User): Promise<void> {
+    return setUserTokens(user);
+  }
+
+  async getCurrentUser(): Promise<User | null> {
+    return getCurrentUser();
+  }
+
+  async hasPermission(user: User | null, requiredRoles: UserRole[]): Promise<boolean> {
+    return hasPermission(user, requiredRoles);
+  }
+}
+
 export async function registerUser({ email, password, name }: RegisterUserParams): Promise<User> {
   // Check if user already exists
   const existingUser = await prisma.user.findUnique({
@@ -133,36 +162,6 @@ export async function setUserTokens(user: User): Promise<void> {
   // Set cookies
   setTokenCookie(accessToken);
   setRefreshTokenCookie(refreshToken);
-}
-
-export async function refreshUserToken(): Promise<void> {
-  const cookieStore = await cookies();
-  const refreshToken = cookieStore.get('refreshToken')?.value;
-  
-  if (!refreshToken) {
-    throw new AuthError('No refresh token found', 401);
-  }
-
-  try {
-    // Verify refresh token
-    const payload = await verifyJWT(refreshToken);
-    
-    // Get user data to ensure it's still valid
-    const user = await prisma.user.findUnique({
-      where: { id: payload.sub }
-    });
-
-    if (!user) {
-      throw new AuthError('User not found', 401);
-    }
-
-    // Generate new tokens
-    await setUserTokens(user);
-  } catch (error) {
-    // Clear cookies if token is invalid
-    clearAuthCookies();
-    throw new AuthError('Invalid refresh token', 401);
-  }
 }
 
 export async function logoutUser(): Promise<void> {
