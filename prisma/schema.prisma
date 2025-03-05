@@ -1,0 +1,310 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum AchievementType {
+  TUTORIAL_COMPLETION
+  PROMPT_MASTERY
+  LEARNING_STREAK
+}
+
+enum SubscriptionTier {
+  FREE
+  PREMIUM
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  EXPIRED
+  TRIAL
+  PAST_DUE
+}
+
+enum PaymentProvider {
+  STRIPE
+  PAYPAL
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String
+  role          UserRole  @default(USER)
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  profile          Profile?
+  tutorialProgress TutorialProgress[]
+  achievements     Achievement[]
+  posts            Post[]
+  comments         Comment[]
+  likes            Like[]
+  apiKeys          ApiKey[]
+  subscription     Subscription?
+  analytics        UserAnalytics[]
+  loginHistory     LoginHistory[]
+
+  @@index([email])
+}
+
+model Profile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  bio          String?
+  avatarUrl    String?
+  socialLinks  Json     @default("{}")
+  preferences  Json     @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Tutorial {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String
+  content     Json
+  difficulty  String
+  category    String
+  premium     Boolean  @default(false)
+  tags        String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  publishedAt DateTime?
+
+  // Relations
+  progress    TutorialProgress[]
+
+  @@index([slug])
+  @@index([category])
+  @@index([premium])
+}
+
+model TutorialProgress {
+  id          String   @id @default(cuid())
+  userId      String
+  tutorialId  String
+  completedAt DateTime?
+  progress    Float    @default(0)
+  lastSection String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tutorial    Tutorial @relation(fields: [tutorialId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tutorialId])
+  @@index([userId])
+  @@index([tutorialId])
+}
+
+model Achievement {
+  id          String          @id @default(cuid())
+  userId      String
+  type        AchievementType
+  title       String
+  description String
+  createdAt   DateTime        @default(now())
+
+  // Relations
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+}
+
+model Post {
+  id          String   @id @default(cuid())
+  title       String
+  content     String   @db.Text
+  authorId    String
+  category    String
+  tags        String[]
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments    Comment[]
+  likes       Like[]
+
+  @@index([authorId])
+  @@index([category])
+  @@index([published])
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  content     String   @db.Text
+  authorId    String
+  postId      String
+  parentId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parent      Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies     Comment[] @relation("CommentReplies")
+  likes       Like[]
+
+  @@index([authorId])
+  @@index([postId])
+  @@index([parentId])
+}
+
+model Like {
+  id          String   @id @default(cuid())
+  userId      String
+  postId      String?
+  commentId   String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post        Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment     Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId, commentId])
+  @@index([userId])
+  @@index([postId])
+  @@index([commentId])
+}
+
+model ApiKey {
+  id          String   @id @default(cuid())
+  userId      String
+  key         String   @unique
+  name        String
+  lastUsed    DateTime?
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime?
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([key])
+}
+
+model Subscription {
+  id              String            @id @default(cuid())
+  userId          String            @unique
+  tier            SubscriptionTier  @default(FREE)
+  status          SubscriptionStatus @default(ACTIVE)
+  startDate       DateTime          @default(now())
+  endDate         DateTime?
+  trialEndDate    DateTime?
+  paymentProvider PaymentProvider?
+  providerId      String?
+  price           Float?
+  currency        String?
+  cancelAtPeriodEnd Boolean         @default(false)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  // Relations
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoices        Invoice[]
+
+  @@index([userId])
+  @@index([tier])
+  @@index([status])
+}
+
+model Invoice {
+  id              String   @id @default(cuid())
+  subscriptionId  String
+  amount          Float
+  currency        String
+  status          String
+  paidAt          DateTime?
+  paymentMethod   String?
+  paymentIntentId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  subscription    Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+}
+
+model UserAnalytics {
+  id          String   @id @default(cuid())
+  userId      String
+  event       String
+  page        String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([event])
+  @@index([createdAt])
+}
+
+model LoginHistory {
+  id          String   @id @default(cuid())
+  userId      String
+  ipAddress   String?
+  userAgent   String?
+  success     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model BackupLog {
+  id          String   @id @default(cuid())
+  filename    String
+  size        Int
+  status      String
+  location    String
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
+  
+  @@index([status])
+  @@index([createdAt])
+}
+
+model SystemLog {
+  id          String   @id @default(cuid())
+  level       String
+  message     String
+  context     Json?
+  source      String?
+  createdAt   DateTime @default(now())
+
+  @@index([level])
+  @@index([source])
+  @@index([createdAt])
+}
