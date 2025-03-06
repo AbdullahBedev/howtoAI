@@ -10,6 +10,7 @@ import { AdvancedTutorialCard } from "@/components/tutorials/advanced-tutorial-c
 import { TutorialCard } from "@/components/tutorials/tutorial-card";
 import { IndustryTrackCard } from "@/components/tutorials/industry-track-card";
 import { motion } from "framer-motion";
+import { NewsletterSignup } from "@/components/newsletter/newsletter-signup";
 
 // Mock data for tutorials with premium indicators
 const tutorials = [
@@ -333,24 +334,24 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <Link href="/tutorials">
               <Card className="hover:shadow-lg transition-all duration-300 hover:border-primary/20">
-                    <CardHeader>
+                <CardHeader>
                   <BookOpen className="h-8 w-8 text-[#f85032] mb-4" />
                   <CardTitle>AI Tutorials</CardTitle>
                   <CardDescription>Step-by-step guides for every skill level</CardDescription>
-                    </CardHeader>
-                    <CardContent>
+                </CardHeader>
+                <CardContent>
                   <ul className="space-y-2 text-sm text-muted-foreground">
                     <li>• Beginner to advanced content</li>
                     <li>• Hands-on practical examples</li>
                     <li>• Industry best practices</li>
                   </ul>
-                    </CardContent>
+                </CardContent>
                 <CardFooter>
                   <Button variant="ghost" className="gap-2 text-[#f85032]">
                     Browse Tutorials <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </CardFooter>
-                  </Card>
+                  </Button>
+                </CardFooter>
+              </Card>
             </Link>
 
             <Link href="/prompts">
@@ -359,20 +360,20 @@ export default function LandingPage() {
                   <Wand2 className="h-8 w-8 text-[#f85032] mb-4" />
                   <CardTitle>Prompt Engineering</CardTitle>
                   <CardDescription>Master the art of crafting effective prompts</CardDescription>
-                    </CardHeader>
-                    <CardContent>
+                </CardHeader>
+                <CardContent>
                   <ul className="space-y-2 text-sm text-muted-foreground">
                     <li>• Advanced techniques</li>
                     <li>• Real-world applications</li>
                     <li>• Model-specific strategies</li>
                   </ul>
-                    </CardContent>
+                </CardContent>
                 <CardFooter>
                   <Button variant="ghost" className="gap-2 text-[#f85032]">
                     Learn Prompting <ArrowRight className="h-4 w-4" />
-                        </Button>
-                    </CardFooter>
-                  </Card>
+                  </Button>
+                </CardFooter>
+              </Card>
             </Link>
 
             <Link href="/ai-agent">
@@ -396,6 +397,15 @@ export default function LandingPage() {
                 </CardFooter>
               </Card>
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Newsletter Section */}
+      <section className="py-20 bg-background">
+        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl mx-auto">
+            <NewsletterSignup variant="card" className="shadow-lg" />
           </div>
         </div>
       </section>
@@ -425,14 +435,14 @@ export default function LandingPage() {
                 <div className="flex items-center gap-2">
                   <BadgeCheck className="h-5 w-5 text-[#f85032]" />
                   <span>Certifications</span>
-            </div>
+                </div>
               </div>
               <Link href="/community">
                 <Button className="gap-2 bg-gradient-to-r from-[#f85032] to-[#e73827] hover:opacity-90">
                   Join Community <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              </div>
+            </div>
             <div className="flex-1 relative">
               <div className="aspect-square bg-gradient-to-br from-[#f85032]/20 to-[#e73827]/20 rounded-3xl p-8">
                 {/* Add community illustration or image here */}
@@ -459,9 +469,9 @@ export default function LandingPage() {
               <Link href="/tutorials">
                 <Button size="lg" variant="outline" className="gap-2">
                   Browse Tutorials <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
